@@ -21,7 +21,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
         const participantsList = details.participants.length
-          ? `<ul>${details.participants.map((participant) => `<li>${participant}</li>`).join("")}</ul>`
+          ? `<ul>${details.participants
+              .map(
+                (participant) =>
+                  `<li><span>${participant}</span><button type="button" class="remove-participant" data-activity="${encodeURIComponent(name)}" data-email="${encodeURIComponent(participant)}" aria-label="Remove ${participant}">&times;</button></li>`
+              )
+              .join("")}</ul>`
           : "<p class=\"no-participants\">No participants yet</p>";
 
         activityCard.innerHTML = `
@@ -48,6 +53,28 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error fetching activities:", error);
     }
   }
+
+  activitiesList.addEventListener("click", async (event) => {
+    const removeButton = event.target.closest(".remove-participant");
+    if (!removeButton) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/activities/${removeButton.dataset.activity}/participants/${removeButton.dataset.email}`,
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to unregister participant");
+      }
+
+      await fetchActivities();
+    } catch (error) {
+      console.error("Error unregistering participant:", error);
+    }
+  });
 
   // Handle form submission
   signupForm.addEventListener("submit", async (event) => {
